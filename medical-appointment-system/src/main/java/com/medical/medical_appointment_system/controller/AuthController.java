@@ -3,18 +3,20 @@ package com.medical.medical_appointment_system.controller;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpServletRequest;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -35,15 +37,15 @@ public class AuthController {
     /**
      * Redirects users to the frontend.
      *
-     * @param response HttpServletResponse used to set the redirect location.
-     * @return ResponseEntity with status 302 (FOUND).
+     * @return ResponseEntity with status 302 (FOUND) and redirect location.
      */
     @GetMapping("/redirect")
-    public ResponseEntity<Void> redirectFrontend(HttpServletResponse response) {
+    public ResponseEntity<Void> redirectFrontend() {
         String frontendUrl = "http://localhost:3000";
         logger.info("Redirecting to frontend at {}", frontendUrl);
-        response.setHeader("Location", frontendUrl);
-        return ResponseEntity.status(HttpStatus.FOUND).build();
+        return ResponseEntity.status(302)
+                .header("Location", frontendUrl)
+                .build();
     }
 
     /**
@@ -55,8 +57,8 @@ public class AuthController {
     @GetMapping("/status")
     public ResponseEntity<Map<String, Object>> getAuthStatus(Authentication authentication) {
         logger.debug("Received request for authentication status");
-        Map<String, Object> response = new HashMap<>();
 
+        Map<String, Object> response = new HashMap<>();
         if (authentication != null && authentication.isAuthenticated()) {
             String role = determineUserRole(authentication);
             logger.info("User authenticated. Username: {}, Role: {}", authentication.getName(), role);
@@ -69,6 +71,24 @@ public class AuthController {
         }
 
         return ResponseEntity.ok(response);
+    }
+
+    // The logout route
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request, @AuthenticationPrincipal(expression = "idToken") OidcIdToken idToken) {
+        // Build the logout details (end session endpoint and id token) to send to the client
+        Map<String, String> logoutDetails = new HashMap<>();
+        String logoutUrl = this.clientRegistration.getProviderDetails().getConfigurationMetadata().get("end_session_endpoint").toString();
+        logoutDetails.put("logoutUrl", logoutUrl);
+        logoutDetails.put("idToken", idToken.getTokenValue());
+        // Log for debugging
+        System.out.println("LogoutDetails, logoutURL: " + logoutUrl);
+        System.out.println("LogoutDetails, idToken: " + idToken.getTokenValue());
+        // Clear session
+        if (request.getSession(false) != null) {
+            request.getSession(false).invalidate();
+        }
+        return ResponseEntity.ok().body(logoutDetails);
     }
 
     /**
