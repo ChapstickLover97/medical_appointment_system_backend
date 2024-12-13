@@ -17,6 +17,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/patients/**").permitAll() // Allow access to patient-related endpoints
                 .requestMatchers("/api/specializations/**").permitAll() // Allow access to specialization-related endpoints
                 .requestMatchers("/api/doctors/**").permitAll() // Allow access to doctor-related endpoints
+                .requestMatchers("/api/doctors").permitAll() // Allow access to doctor-related endpoints
                 .anyRequest().authenticated() // Require authentication for all other endpoints
             )
             .csrf(csrf -> csrf.disable()) // Disable CSRF protection (if appropriate for your use case)

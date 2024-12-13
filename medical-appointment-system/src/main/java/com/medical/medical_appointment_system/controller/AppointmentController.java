@@ -70,7 +70,21 @@ public class AppointmentController {
         return ResponseEntity.ok(appointment.get());
     }
 
-    
+    // Get all appointments by patient ID and validate Date of Birth
+    @GetMapping("/patient/{id}")
+    public ResponseEntity<?> getAppointmentsByPatientId(
+            @PathVariable Long id,
+            @RequestParam String dateOfBirth) {
+        LocalDate dob = LocalDate.parse(dateOfBirth); // Convert to LocalDate if necessary
+        List<Appointment> appointments = appointmentRepository.findByPatientIdAndPatientDateOfBirth(id, dob);
+
+        if (appointments.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("No appointments found for this patient.");
+        }
+
+        return ResponseEntity.ok(appointments);
+    }
 
     // Create a new appointment
     @PostMapping
