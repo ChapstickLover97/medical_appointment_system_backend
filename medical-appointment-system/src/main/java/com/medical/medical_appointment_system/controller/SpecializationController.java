@@ -22,7 +22,7 @@ public class SpecializationController {
      * Retrieve all specializations.
      * @return List of specializations wrapped in a ResponseEntity.
      */
-    @GetMapping("/getall")
+    @GetMapping
     public ResponseEntity<List<Specialization>> getAllSpecializations() {
         List<Specialization> specializations = specializationRepository.findAll();
         return ResponseEntity.ok(specializations);

@@ -33,4 +33,7 @@ public interface AppointmentRepository extends JpaRepository<Appointment, Long> 
 
     // Find a specific appointment by patient ID, date, and time
     List<Appointment> findByPatientIdAndDateAndTime(Long patientId, LocalDate date, LocalTime time);
+
+    // Find appointments by patient ID and patient date of birth
+
 }

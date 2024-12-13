@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -47,13 +48,29 @@ public class AppointmentController {
         return appointmentRepository.findAll();
     }
 
-    // Get a specific appointment by ID
+    // Get a specific appointment by ID and validate Date of Birth
     @GetMapping("/{id}")
-    public ResponseEntity<Appointment> getAppointmentById(@PathVariable Long id) {
+    public ResponseEntity<?> getAppointmentByIdAndDateOfBirth(
+            @PathVariable Long id,
+            @RequestParam String dateOfBirth) {
         Optional<Appointment> appointment = appointmentRepository.findById(id);
-        return appointment.map(ResponseEntity::ok)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Appointment not found"));
+
+        if (appointment.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body("Sorry, no appointment with that information.");
+        }
+
+        // Validate the patient's date of birth
+        Patient patient = appointment.get().getPatient();
+        if (!patient.getDateOfBirth().toString().equals(dateOfBirth)) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Sorry, no appointment with that information.");
+        }
+
+        return ResponseEntity.ok(appointment.get());
     }
+
+    
 
     // Create a new appointment
     @PostMapping
